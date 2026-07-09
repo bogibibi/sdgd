@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ну... погоди...</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0a0f0d;
+      --bg-secondary: #0f1f15;
+      --bg-card: #132a1c;
+      --accent: #22c55e;
+      --accent-secondary: #4ade80;
+      --accent-gradient: linear-gradient(135deg, #16a34a, #22c55e, #4ade80);
+      --text-primary: #ffffff;
+      --text-secondary: #a8b3ab;
+      --text-muted: #6c7a6f;
+      --border: rgba(34, 197, 94, 0.25);
+      --glow: 0 0 20px rgba(34, 197, 94, 0.3), 0 0 40px rgba(34, 197, 94, 0.1);
+      --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Language Selection */
+    #langSelection {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg-primary);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 20px;
+    }
+
+    .lang-title {
+      font-size: 28px;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+    }
+
+    .lang-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 14px 40px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 240px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .lang-btn:hover, .lang-btn:active {
+      border-color: var(--accent);
+      box-shadow: var(--glow);
+      transform: translateY(-2px);
+    }
+
+    /* Header */
+    header {
+      padding: 30px 20px 20px;
+      text-align: center;
+      background: linear-gradient(180deg, rgba(233, 69, 96, 0.08) 0%, transparent 100%);
+    }
+
+    .logo {
+      width: 140px;
+      height: auto;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 15px rgba(233, 69, 96, 0.5));
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      max-width: 320px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.4;
+    }
+
+    /* Districts Banner */
+    #districtsBanner {
+      margin: 10px 15px;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: none;
+    }
+
+    .districts-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .district-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .district-tag {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #4ade80;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Categories */
+    .categories {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 15px;
+      position: sticky;
+      top: 0;
+      background: rgba(13, 13, 13, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .category-btn {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-secondary);
+      padding: 8px 20px;
+      border-radius: 25px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .category-btn.active {
+      background: var(--accent-gradient);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+    }
+
+    /* Product Grid */
+    .product-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 15px;
+      padding-bottom: 140px;
+    }
+
+    .product-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: all 0.3s ease;
+      box-shadow: var(--card-shadow);
+    }
+
+    .product-card:active {
+      transform: scale(0.97);
+      border-color: var(--accent);
+    }
+
+    .product-image {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      background: var(--bg-secondary);
+    }
+
+    .product-info {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .product-title {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.3;
+      min-height: 34px;
+    }
+
+    .product-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .product-price {
+      font-size: 16px;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Counter */
+    .counter-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-primary);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .counter-btn {
+      background: transparent;
+      color: var(--accent);
+      border: none;
+      width: 36px;
+      height: 36px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .counter-btn:active { background: rgba(233, 69, 96, 0.2); }
+    .count-value { font-weight: 700; font-size: 14px; color: var(--text-primary); }
+
+    .add-btn {
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+    }
+
+    .add-btn:active {
+      transform: scale(0.95);
+      box-shadow: 0 2px 8px rgba(233, 69, 96, 0.5);
+    }
+
+    /* Cart */
+    .cart-summary {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(22, 33, 62, 0.98);
+      backdrop-filter: blur(20px);
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: none;
+      z-index: 100;
+    }
+
+    .total-price {
+      font-size: 20px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 10px;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .checkout-btn {
+      width: 100%;
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(233, 69, 96, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    .checkout-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Modals */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: var(--bg-card);
+      padding: 24px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 85vh;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 15px;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .detail-image { width: 100%; border-radius: 12px; margin-bottom: 15px; }
+    .detail-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; white-space: pre-line; margin-bottom: 20px; }
+
+    textarea {
+      width: 100%;
+      background: var(--bg-primary);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-primary);
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+      min-height: 80px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Delivery checkbox */
+    .delivery-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: rgba(233, 69, 96, 0.08);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 15px;
+      cursor: pointer;
+    }
+
+    .delivery-option input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .delivery-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .delivery-price {
+      margin-left: auto;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .modal-buttons { display: flex; gap: 10px; margin-top: 5px; }
+    .modal-btn { flex: 1; padding: 13px; border-radius: 10px; border: none; font-weight: 700; font-size: 15px; cursor: pointer; }
+    .btn-cancel { background: rgba(255,255,255,0.1); color: var(--text-secondary); }
+    .btn-send { background: var(--accent-gradient); color: white; box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3); }
+  </style>
+</head>
+<body>
+
+<div id="langSelection">
+  <img src="assets/logo.png" style="width: 160px; margin-bottom: 15px; filter: drop-shadow(0 0 15px rgba(34,197,94,0.5));">
+  <div class="lang-title">Ну... погоди...</div>
+  <button class="lang-btn" onclick="setLanguage('ru')">Русский 🇷🇺</button>
+  <button class="lang-btn" onclick="setLanguage('en')">English 🇺🇸</button>
+  <button class="lang-btn" onclick="setLanguage('ko')">한국어 🇰🇷</button>
+  <button class="lang-btn" onclick="setLanguage('ja')">日本語 🇯🇵</button>
+  <button class="lang-btn" onclick="setLanguage('zh')">中文 🇨🇳</button>
+</div>
+
+<header>
+  <img src="assets/logo.png" class="logo" alt="Ну... погоди...">
+  <h1>Ну... погоди...</h1>
+  <div class="subtitle" id="ui-subtitle"></div>
+</header>
+
+<!-- Districts availability banner -->
+<div id="districtsBanner">
+  <div class="districts-title">🟢 <span id="districts-title-text">Available areas</span></div>
+  <div class="district-tags" id="districtTags"></div>
+</div>
+
+<div class="categories">
+  <button class="category-btn active" id="cat-all" onclick="filterProducts('all')">All</button>
+  <button class="category-btn" id="cat-main" onclick="filterProducts('main')">Main</button>
+  <button class="category-btn" id="cat-bakery" onclick="filterProducts('bakery')">Bakery</button>
+</div>
+
+<section class="product-grid" id="productGrid"></section>
+
+<div class="cart-summary" id="cartSummary">
+  <div class="total-price" id="totalPrice">0 USDT</div>
+  <button class="checkout-btn" id="checkoutBtn" onclick="openOrderModal()">Checkout</button>
+</div>
+
+<!-- Detail Modal -->
+<div id="detailModal" class="modal-overlay" onclick="closeDetailModal(event)">
+  <div class="modal-content" style="position:relative;" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeDetailModal(event)">&times;</button>
+    <img id="modalImg" src="" class="detail-image">
+    <div id="modalTitle" class="modal-title"></div>
+    <div id="modalDesc" class="detail-desc"></div>
+    <div id="modalPrice" class="product-price" style="font-size: 22px; margin-bottom: 15px;"></div>
+    <div id="modalControls"></div>
+  </div>
+</div>
+
+<!-- Order Modal -->
+<div id="orderModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-title" id="order-modal-title">Order Notes</div>
+    <textarea id="customerComment" placeholder="..."></textarea>
+    <label class="delivery-option" id="deliveryOption">
+      <input type="checkbox" id="deliveryCheckbox">
+      <span class="delivery-label" id="delivery-label-text">Delivery</span>
+      <span class="delivery-price">10 USDT</span>
+    </label>
+    <div class="modal-buttons">
+      <button class="modal-btn btn-cancel" id="btn-cancel" onclick="closeOrderModal()">Cancel</button>
+      <button class="modal-btn btn-send" id="btn-send" onclick="sendOrder()">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.expand();
+
+  let currentLang = 'ru';
+  let currentCategory = 'all';
+  const cart = new Map();
+
+  const i18n = {
+    ru: {
+      subtitle: "Сладости, которые дарят настроение. Натуральные ингредиенты, красивое оформление и секретные продукты только у нас.",
+      all: "Все", bakery: "Bakery", main: "Main",
+      add: "Добавить", total: "Итого", checkout: "Оформить заказ",
+      wishes: "Пожелания к заказу",
+      placeholder: "Напишите пожелания, удобное время...",
+      cancel: "Отмена", send: "Отправить",
+      unit_g: "г", unit_pc: "шт",
+      delivery: "Доставка", districts_title: "Наличие в районах",
+    },
+    en: {
+      subtitle: "Sweets that bring joy. Natural ingredients, beautiful presentation, and secret products found only with us.",
+      all: "All", bakery: "Bakery", main: "Main",
+      add: "Add", total: "Total", checkout: "Checkout",
+      wishes: "Order Notes",
+      placeholder: "Enter preferred time or other wishes...",
+      cancel: "Cancel", send: "Send",
+      unit_g: "g", unit_pc: "pc",
+      delivery: "Delivery", districts_title: "Available areas",
+    },
+    ko: {
+      subtitle: "기분을 좋게 만드는 달콤함. 천연 재료, 아름다운 장식, 그리고 오직 우리에게만 있는 비밀 제품들.",
+      all: "전체", bakery: "베이커리", main: "메인",
+      add: "추가", total: "합계", checkout: "주문하기",
+      wishes: "주문 요청사항",
+      placeholder: "희망 시간 또는 기타 요청사항...",
+      cancel: "취소", send: "보내기",
+      unit_g: "g", unit_pc: "개",
+      delivery: "배달", districts_title: "이용 가능 지역",
+    },
+    ja: {
+      subtitle: "気分を明るくするスイーツ。天然素材、美しい盛り付け、そして当店だけの秘密の食材。",
+      all: "すべて", bakery: "ベーカリー", main: "メイン",
+      add: "追加", total: "合計", checkout: "注文する",
+      wishes: "ご要望",
+      placeholder: "ご希望の時間やその他のご要望...",
+      cancel: "キャンセル", send: "送信",
+      unit_g: "g", unit_pc: "個",
+      delivery: "配達", districts_title: "利用可能エリア",
+    },
+    zh: {
+      subtitle: "赋予好心情的甜点。天然食材，精美装饰，以及只有我们才有的秘密产品。",
+      all: "全部", bakery: "烘焙", main: "主打",
+      add: "添加", total: "合计", checkout: "下单",
+      wishes: "订单备注",
+      placeholder: "请输入期望时间或其他备注...",
+      cancel: "取消", send: "发送",
+      unit_g: "g", unit_pc: "个",
+      delivery: "配送", districts_title: "可用区域",
+    }
+  };
+
+  const products = [
+   { 
+        id: 'ww', 
+        title: 'White Widow Amstr', 
+        category: 'main', 
+        unit: 'g',
+        image: 'assets/ww.png', 
+        description: {
+            ru: '🌲 High quality WHITE WIDOW 🌲\n19-20% THC 🧬\n\nДаныый сорт в первую очередь имеет отличную генетику от тайскийх сортов, он обладает большим количеством тгк и особым качеством производсва. Белая Вдова отлично подойдет как на утро так и на вечер.  (местное производсво, семечки из Амстердама).\n\n💰 1 г — 18 USDT\n💰 3 г — 48 USDT\n💰 5 г — 75 USDT',
+            en: '🌲 High quality WHITE WIDOW 🌲\n19-20% THC 🧬\n\nThis strain primarily boasts distinct genetics compared to Thai varieties, boasting a high THC content and exceptional production quality. White Widow is perfect for both morning and evening use. (Local production, seeds from Amsterdam).\n\n💰 1 g — 18 USDT\n💰 3 g — 48 USDT\n💰 5 g — 75 USDT',
+            ko: '🌲 고품질 WHITE WIDOW 🌲\n19-20% THC 🧬\n\n이 품종은 태국 품종과 비교하여 뛰어난 유전자를 자랑하며, 높은 THC 함량과 탁월한 생산 품질을 갖추고 있습니다. 화이트 위도우는 아침과 저녁 모두에 완벽합니다. (현지 생산, 암스테르담산 종자).\n\n💰 1 g — 18 USDT\n💰 3 g — 48 USDT\n💰 5 g — 75 USDT',
+            ja: '🌲 高品質 WHITE WIDOW 🌲\n19-20% THC 🧬\n\nこの品種はタイ品種と比べて優れた遺伝子を誇り、高いTHC含有量と卓越した生産品質を備えています。ホワイトウィドウは朝にも夜にも最適です。（現地生産、アムステルダム産の種子）。\n\n💰 1 g — 18 USDT\n💰 3 g — 48 USDT\n💰 5 g — 75 USDT',
+            zh: '🌲 高品质 WHITE WIDOW 🌲\n19-20% THC 🧬\n\n该品种拥有与泰国品种不同的卓越基因，具有高THC含量和出色的生产品质。白寡妇适合早晚使用。（本地生产，阿姆斯特丹种子）。\n\n💰 1 g — 18 USDT\n💰 3 g — 48 USDT\n💰 5 g — 75 USDT'
+        },
+        get_price: (q) => q >= 5 ? 15 : (q >= 3 ? 16 : 18),
+        weights: [1, 3, 5]
+    },
+{
+    id: 'chocolate-cookie', 
+    title: 'Chocolate Cookies 0.9g', 
+    category: 'bakery', 
+    unit: 'pc',
+    image: 'assets/stickers/chocolate_cookie.webp', 
+    description: {
+        ru: '🍪 Chocolate Cookies 0.9g\n\nНасыщенные шоколадные cookies с мягкой серединой. Идеально сочетаются с кофе и дарят глубокий вкус.\n\n🌲 110-130mg THC\n\n1-3 🍪 — 12 USDT/🍪\n4-7 🍪 — 11 USDT/🍪\n8+ 🍪 — 9 USDT/🍪',
+        en: '🍪 Chocolate Cookies 0.9g\n\nRich chocolate cookies with a soft center. Perfect with coffee, delivering a deep and satisfying flavor.\n\n🌲 110-130mg THC\n\n1-3 🍪 — 12 USDT/🍪\n4-7 🍪 — 11 USDT/🍪\n8+ 🍪 — 9 USDT/🍪',
+        ko: '🍪 초콜릿 쿠키 0.9g\n\n부드러운 속이 있는 진한 초콜릿 쿠키. 커피와 완벽하게 어울리며 깊고 만족스러운 맛을 선사합니다.\n\n🌲 110-130mg THC\n\n1-3 🍪 — 12 USDT/🍪\n4-7 🍪 — 11 USDT/🍪\n8+ 🍪 — 9 USDT/🍪',
+        ja: '🍪 チョコレートクッキー 0.9g\n\n柔らかい中心部を持つ濃厚なチョコレートクッキー。コーヒーとの相性抜群で、深く満足感のある味わい。\n\n🌲 110-130mg THC\n\n1-3 🍪 — 12 USDT/🍪\n4-7 🍪 — 11 USDT/🍪\n8+ 🍪 — 9 USDT/🍪',
+        zh: '🍪 巧克力曲奇 0.9g\n\n柔软内心的浓郁巧克力曲奇。与咖啡完美搭配，带来深沉满足的口感。\n\n🌲 110-130mg THC\n\n1-3 🍪 — 12 USDT/🍪\n4-7 🍪 — 11 USDT/🍪\n8+ 🍪 — 9 USDT/🍪'
+    },
+    get_price: (q) => q >= 8 ? 9 : (q >= 4 ? 11 : 12)
+},
+{
+    id: 'vanilla-cookie', 
+    title: 'Vanilla Cookies 0.9g', 
+    category: 'bakery', 
+    unit: 'pc',
+    image: 'assets/stickers/vanilla_cookie.webp', 
+    description: {
+        ru: '🍪 Vanilla Cookies 0.9g\n\nНежные ванильные cookies с кусочками шоколада и тонким ароматом какао. Классика в лучшем исполнении.\n\n🌲 110-130mg THC\n\n1-3 🍪 — 12 USDT/🍪\n4-7 🍪 — 11 USDT/🍪\n8+ 🍪 — 9 USDT/🍪',
+        en: '🍪 Vanilla Cookies 0.9g\n\nDelicate vanilla cookies with chocolate chips and a subtle cocoa aroma. A classic at its best.\n\n🌲 110-130mg THC\n\n1-3 🍪 — 12 USDT/🍪\n4-7 🍪 — 11 USDT/🍪\n8+ 🍪 — 9 USDT/🍪',
+        ko: '🍪 바닐라 쿠키 0.9g\n\n초콜릿 칩과 은은한 코코아 향이 어우러진 부드러운 바닐라 쿠키. 최고의 클래식.\n\n🌲 110-130mg THC\n\n1-3 🍪 — 12 USDT/🍪\n4-7 🍪 — 11 USDT/🍪\n8+ 🍪 — 9 USDT/🍪',
+        ja: '🍪 バニラクッキー 0.9g\n\nチョコチップとほのかなココアの香りが楽しめる繊細なバニラクッキー。最高のクラシック。\n\n🌲 110-130mg THC\n\n1-3 🍪 — 12 USDT/🍪\n4-7 🍪 — 11 USDT/🍪\n8+ 🍪 — 9 USDT/🍪',
+        zh: '🍪 香草曲奇 0.9g\n\n搭配巧克力碎片和淡淡可可香气的细腻香草曲奇。经典之最。\n\n🌲 110-130mg THC\n\n1-3 🍪 — 12 USDT/🍪\n4-7 🍪 — 11 USDT/🍪\n8+ 🍪 — 9 USDT/🍪'
+    },
+    get_price: (q) => q >= 8 ? 9 : (q >= 4 ? 11 : 12)
+},
+{
+    id: 'cherry-cake-strong', 
+    title: 'Cherry Cake Strong 1.6g', 
+    category: 'bakery', 
+    unit: 'pc',
+    image: 'assets/stickers/cherry_cake_strong.webp', 
+    description: {
+        ru: '🧁 Cherry Cake Strong 1.6g\n\nТот же великолепный вишневый вкус, но с удвоенной силой. Для тех, кто ценит глубокое погружение.\n\n🌲 170-190mg THC\n\n1-3 🧁 — 18 USDT/🧁\n4-6 🧁 — 16 USDT/🧁\n7-12 🧁 — 15 USDT/🧁',
+        en: '🧁 Cherry Cake Strong 1.6g\n\nThe same great cherry flavor but with double the strength. For those who appreciate a deep dive.\n\n🌲 170-190mg THC\n\n1-3 🧁 — 18 USDT/🧁\n4-6 🧁 — 16 USDT/🧁\n7-12 🧁 — 15 USDT/🧁',
+        ko: '🧁 체리 케이크 스트롱 1.6g\n\n같은 훌륭한 체리 맛이지만 두 배의 강도. 깊은 몰입을 즐기는 분들을 위한 제품.\n\n🌲 170-190mg THC\n\n1-3 🧁 — 18 USDT/🧁\n4-6 🧁 — 16 USDT/🧁\n7-12 🧁 — 15 USDT/🧁',
+        ja: '🧁 チェリーケーキ ストロング 1.6g\n\n同じ素晴らしいチェリー味ですが、2倍の強さ。深い没入感を楽しむ方に。\n\n🌲 170-190mg THC\n\n1-3 🧁 — 18 USDT/🧁\n4-6 🧁 — 16 USDT/🧁\n7-12 🧁 — 15 USDT/🧁',
+        zh: '🧁 樱桃蛋糕加强版 1.6g\n\n同样美味的樱桃口味，但强度加倍。适合喜欢深度体验的人。\n\n🌲 170-190mg THC\n\n1-3 🧁 — 18 USDT/🧁\n4-6 🧁 — 16 USDT/🧁\n7-12 🧁 — 15 USDT/🧁'
+    },
+    get_price: (q) => q >= 7 ? 15 : (q >= 4 ? 16 : 18)
+},
+{
+    id: 'chocolate-brownie', 
+    title: 'Chocolate Brownie 1.9g', 
+    category: 'bakery', 
+    unit: 'pc',
+    image: 'assets/stickers/brownie.webp', 
+    description: {
+        ru: '🍫 Chocolate Brownie 1.9g\n\nНежный, экстремально шоколадный брауни, который тает во рту. Очень мощный продукт для настоящих смельчаков.\n\n🌲 230-250mg THC\n\n1-3 🍫 — 23 USDT/🍫\n4-7 🍫 — 22 USDT/🍫\n8+ 🍫 — 20 USDT/🍫',
+        en: '🍫 Chocolate Brownie 1.9g\n\nDelicate, extremely chocolatey brownie that melts in your mouth. A very potent product for the truly brave.\n\n🌲 230-250mg THC\n\n1-3 🍫 — 23 USDT/🍫\n4-7 🍫 — 22 USDT/🍫\n8+ 🍫 — 20 USDT/🍫',
+        ko: '🍫 초콜릿 브라우니 1.9g\n\n입안에서 녹는 부드럽고 극도로 초콜릿한 브라우니. 진정한 용감한 자를 위한 매우 강력한 제품.\n\n🌲 230-250mg THC\n\n1-3 🍫 — 23 USDT/🍫\n4-7 🍫 — 22 USDT/🍫\n8+ 🍫 — 20 USDT/🍫',
+        ja: '🍫 チョコレートブラウニー 1.9g\n\n口の中でとろける繊細で超チョコレートなブラウニー。真の勇者のための非常に強力な製品。\n\n🌲 230-250mg THC\n\n1-3 🍫 — 23 USDT/🍫\n4-7 🍫 — 22 USDT/🍫\n8+ 🍫 — 20 USDT/🍫',
+        zh: '🍫 巧克力布朗尼 1.9g\n\n入口即化的细腻极致巧克力布朗尼。为真正勇敢者准备的超强产品。\n\n🌲 230-250mg THC\n\n1-3 🍫 — 23 USDT/🍫\n4-7 🍫 — 22 USDT/🍫\n8+ 🍫 — 20 USDT/🍫'
+    },
+    get_price: (q) => q >= 8 ? 20 : (q >= 4 ? 22 : 23)
+},
+        { 
+        id: 'og_kush', 
+        title: 'OG Kush Thai', 
+        category: 'main', 
+        unit: 'g',
+        image: 'assets/og_kush.png', 
+        description: {
+            ru: '🌲 Thai quality OG KUSH 🌲\n14-15% THC 🧬\n\nOriginal Gangster выведен селекционерами из Лос-Анджелеса, которые за основу взяли афганские сорта каннабиса.Внешний вид OG Kush fem обладает тонкой структурой, вытянутыми стеблями и очень плотными, крепкими шишками.\n💰 1 г — 10 USDT\n💰 3 г — 27 USDT\n💰 5 г — 40 USDT\n💰 10 г — 75 USDT\n💰 20 г — 140 USDT',
+            en: '🌲 Thai quality OG KUSH 🌲\n14-15% THC 🧬\n\nOriginal Gangster was developed by Los Angeles breeders using Afghan cannabis strains as a base. OG Kush fem has a fine structure, elongated stems, and very dense, strong buds.\n💰 1 g — 10 USDT\n💰 3 g — 27 USDT\n💰 5 g — 40 USDT\n💰 10 g — 75 USDT\n💰 20 g — 140 USDT',
+            ko: '🌲 태국 품질 OG KUSH 🌲\n14-15% THC 🧬\n\nOriginal Gangster는 아프간 대마 품종을 기반으로 로스앤젤레스 육종가들이 개발했습니다. OG Kush fem은 섬세한 구조, 길쭉한 줄기, 매우 밀도 높고 단단한 버드를 가지고 있습니다.\n💰 1 g — 10 USDT\n💰 3 g — 27 USDT\n💰 5 g — 40 USDT\n💰 10 g — 75 USDT\n💰 20 g — 140 USDT',
+            ja: '🌲 タイ品質 OG KUSH 🌲\n14-15% THC 🧬\n\nOriginal Gangsterはアフガン大麻品種をベースにロサンゼルスのブリーダーが開発しました。OG Kush femは繊細な構造、細長い茎、非常に密度が高く丈夫なバッズを持っています。\n💰 1 g — 10 USDT\n💰 3 g — 27 USDT\n💰 5 g — 40 USDT\n💰 10 g — 75 USDT\n💰 20 g — 140 USDT',
+            zh: '🌲 泰国品质 OG KUSH 🌲\n14-15% THC 🧬\n\nOriginal Gangster由洛杉矶育种者以阿富汗大麻品种为基础开发。OG Kush fem具有精细结构、细长茎秆和非常密实坚固的花苞。\n💰 1 g — 10 USDT\n💰 3 g — 27 USDT\n💰 5 g — 40 USDT\n💰 10 g — 75 USDT\n💰 20 g — 140 USDT'
+        },
+        get_price: (q) => q >= 20 ? 7 : (q >= 10 ? 7.5 : (q >= 5 ? 8 : (q >= 3 ? 9 : 10))),
+        weights: [1, 3, 5, 10, 20]
+    },
+    { 
+        id: 'LBC_OG', 
+        title: 'LBC OG Thai', 
+        category: 'main', 
+        unit: 'g',
+        image: 'assets/LBC_OG.jpg', 
+        description: {
+            ru: '🍋🍓 Lemon Berry Candy OG 🍬🍭\n14-16% THC 🧬\n\nЭтот фантастический гибрид не только имеет название, напоминающее столкновение восхитительного кондитерского магазина и грузовика, полного сладостей, но и обладает соответствующим ароматом и вкусом. Представьте себе большую миску сочных ягод с выжатым лимоном.\n💰 1 г — 10 USDT\n💰 3 г — 27 USDT\n💰 5 г — 40 USDT\n💰 10 г — 75 USDT\n💰 20 г — 140 USDT',
+            en: '🍋🍓 Lemon Berry Candy OG 🍬🍭\n14-16% THC 🧬\n\nThis fantastic hybrid not only has a name reminiscent of a collision between a delightful candy shop and a truck full of sweets, but also possesses a matching aroma and flavor. Imagine a large bowl of juicy berries with a squeeze of lemon.\n💰 1 g — 10 USDT\n💰 3 g — 27 USDT\n💰 5 g — 40 USDT\n💰 10 g — 75 USDT\n💰 20 g — 140 USDT',
+            ko: '🍋🍓 Lemon Berry Candy OG 🍬🍭\n14-16% THC 🧬\n\n이 환상적인 하이브리드는 유쾌한 사탕 가게와 과자가 가득 찬 트럭의 충돌을 연상시키는 이름을 가졌을 뿐만 아니라, 그에 걸맞은 향과 맛을 지니고 있습니다. 즙이 많은 베리가 가득 담긴 큰 그릇에 레몬을 짠 모습을 상상해 보세요.\n💰 1 g — 10 USDT\n💰 3 g — 27 USDT\n💰 5 g — 40 USDT\n💰 10 g — 75 USDT\n💰 20 g — 140 USDT',
+            ja: '🍋🍓 Lemon Berry Candy OG 🍬🍭\n14-16% THC 🧬\n\nこの素晴らしいハイブリッドは、魅力的なお菓子屋さんとお菓子がいっぱい詰まったトラックが衝突したような名前だけでなく、それにふさわしい香りと味わいも兼ね備えています。ジューシーなベリーがたっぷり入った大きなボウルに、レモンを絞ったところを想像してみてください。\n💰 1 g — 10 USDT\n💰 3 g — 27 USDT\n💰 5 g — 40 USDT\n💰 10 g — 75 USDT\n💰 20 g — 140 USDT',
+            zh: '🍋🍓 Lemon Berry Candy OG 🍬🍭\n14-16% THC 🧬\n\n这种奇妙的混合品种不仅名字让人联想到一家精致的糖果店与一辆装满甜点的卡车相撞，而且还拥有与之匹配的香气和口感。想象一下，一大碗多汁的浆果挤上了柠檬汁。\n💰 1 g — 10 USDT\n💰 3 g — 27 USDT\n💰 5 g — 40 USDT\n💰 10 g — 75 USDT\n💰 20 g — 140 USDT'
+        },
+        get_price: (q) => q >= 20 ? 7 : (q >= 10 ? 7.5 : (q >= 5 ? 8 : (q >= 3 ? 9 : 10))),
+        weights: [1, 3, 5, 10, 20]
+    },
+
+    { 
+        id: 'ketamine', 
+        title: 'Ketamine', 
+        category: 'main', 
+        unit: 'g',
+        image: 'assets/ketamine.jpg', 
+        description: {
+            ru: '🧂 Ketamine🧂Импот из амстердама, из проверенных каналов, надежно снимает стресс.\n💰 1 г — 80 USDT\n💰 2 г — 140 USDT\n💰 5 г — 250 USDT',
+            en: '🧂 Ketamine🧂Import from Amsterdam, from verified channels, reliably relieves stress.\n💰 1 g — 80 USDT\n💰 2 g — 140 USDT\n💰 5 g — 250 USDT',
+            ko: '🧂 케타민🧂암스테르담산 수입품, 검증된 채널을 통해, 스트레스를 확실하게 해소해 줍니다.\n💰 1 g — 80 USDT\n💰 2 g — 140 USDT\n💰 5 g — 250 USDT',
+            ja: '🧂 ケタミン🧂アムステルダムからの輸入品、検証済みのルートで、確実にストレスを解消します。\n💰 1 g — 80 USDT\n💰 2 g — 140 USDT\n💰 5 g — 250 USDT',
+            zh: '🧂 氯胺酮🧂阿姆斯特丹进口，经验证渠道，可靠缓解压力。\n💰 1 g — 80 USDT\n💰 2 g — 140 USDT\n💰 5 g — 250 USDT'
+        },
+        get_price: (q) => q >= 5 ? 50 :  (q >= 2 ? 70 : 80),
+        weights: [1, 2, 3, 5]
+    },
+    { 
+        id: 'mushrooms', 
+        title: 'Penic Envy', 
+        category: 'main', 
+        unit: 'g',
+        image: 'assets/mushrooms.jpg', 
+        description: {
+            ru: '🍄 Penic Envy\n💰 3 г — 50 USDT\n💰 5 г — 75 USDT\n💰 10 г — 140 USDT',
+            en: '🍄 Penic Envy\n💰 3 g — 50 USDT\n💰 5 g — 75 USDT\n💰 10 g — 140 USDT',
+            ko: '🍄 페닉 엔비\n💰 3 g — 50 USDT\n💰 5 g — 75 USDT\n💰 10 g — 140 USDT',
+            ja: '🍄 ペニック・エンビー\n💰 3 g — 50 USDT\n💰 5 g — 75 USDT\n💰 10 g — 140 USDT',
+            zh: '🍄 Penic Envy\n💰 3 g — 50 USDT\n💰 5 g — 75 USDT\n💰 10 g — 140 USDT'
+        },
+        get_price: (q) => q >= 10 ? 14 : (q >= 5 ? 15 : 16.6),
+        weights: [3, 5, 10]
+    },
+    { 
+        id: 'LSD', 
+        title: 'LSD 150', 
+        category: 'main', 
+        unit: 'pc',
+        image: 'assets/LSD.jpg', 
+        description: {
+            ru: '🖼 LSD 150мг🖼\n💰 1 шт — 40 USDT\n💰 2 шт — 75 USDT\n💰 5 шт — 150 USDT',
+            en: '🖼 LSD 150mg🖼\n💰 1 pc — 40 USDT\n💰 2 pc — 75 USDT\n💰 5 pc — 150 USDT',
+            ko: '🖼 LSD 150mg🖼\n💰 1 개 — 40 USDT\n💰 2 개 — 75 USDT\n💰 5 개 — 150 USDT',
+            ja: '🖼 LSD 150mg🖼\n💰 1 個 — 40 USDT\n💰 2 個 — 75 USDT\n💰 5 個 — 150 USDT',
+            zh: '🖼 LSD 150mg🖼\n💰 1 片 — 40 USDT\n💰 2 片 — 75 USDT\n💰 5 片 — 150 USDT'
+        },
+        get_price: (q) => q >= 5 ? 30 : (q >= 2 ? 37.5 : 40),
+        weights: [1, 2, 5]
+    }
+  ];
+
+  // --- Load districts from API ---
+  async function loadDistricts() {
+    try {
+      const resp = await fetch('/api/districts');
+      const data = await resp.json();
+      if (data.districts && data.districts.length > 0) {
+        const banner = document.getElementById('districtsBanner');
+        const tags = document.getElementById('districtTags');
+        banner.style.display = 'block';
+        tags.innerHTML = data.districts.map(d =>
+          `<span class="district-tag">✅ ${d}</span>`
+        ).join('');
+      }
+    } catch (e) {
+      console.log('Districts API not available');
+    }
+  }
+
+  function setLanguage(lang) {
+    currentLang = lang;
+    document.getElementById('langSelection').style.display = 'none';
+    updateUIStrings();
+    renderProducts();
+    loadDistricts();
+  }
+
+  function updateUIStrings() {
+    const L = i18n[currentLang];
+    document.getElementById('ui-subtitle').innerText = L.subtitle;
+    document.getElementById('cat-all').innerText = L.all;
+    document.getElementById('cat-main').innerText = L.main;
+    document.getElementById('cat-bakery').innerText = L.bakery;
+    document.getElementById('checkoutBtn').innerText = L.checkout;
+    document.getElementById('order-modal-title').innerText = L.wishes;
+    document.getElementById('customerComment').placeholder = L.placeholder;
+    document.getElementById('btn-cancel').innerText = L.cancel;
+    document.getElementById('btn-send').innerText = L.send;
+    document.getElementById('delivery-label-text').innerText = L.delivery;
+    document.getElementById('districts-title-text').innerText = L.districts_title;
+    updateCartUI();
+  }
+
+  function renderProducts() {
+    const grid = document.getElementById('productGrid');
+    grid.innerHTML = '';
+    const filtered = currentCategory === 'all'
+      ? products
+      : products.filter(p => p.category === currentCategory);
+
+    filtered.forEach(p => {
+      const count = cart.get(p.id)?.count || 0;
+      const currentPrice = p.get_price(count || 1);
+      const unitLabel = p.unit === 'pc' ? i18n[currentLang].unit_pc : i18n[currentLang].unit_g;
+
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.onclick = () => openDetailModal(p.id);
+      card.innerHTML = `
+        <img src="${p.image}" class="product-image" onerror="this.style.background='var(--bg-secondary)'">
+        <div class="product-info">
+          <div class="product-title">${p.title}</div>
+          <div class="product-desc">${p.description[currentLang]}</div>
+          <div class="product-price">${currentPrice} USDT/${unitLabel}</div>
+          <div onclick="event.stopPropagation()">
+          ${count === 0
+            ? `<button class="add-btn" onclick="updateCount('${p.id}', ${p.weights ? p.weights[0] : 1})">${i18n[currentLang].add}</button>`
+            : `<div class="counter-controls">
+                <button class="counter-btn" onclick="handleDelta('${p.id}', -1)">−</button>
+                <span class="count-value">${count} ${unitLabel}</span>
+                <button class="counter-btn" onclick="handleDelta('${p.id}', 1)">+</button>
+               </div>`
+          }
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function filterProducts(cat) {
+    currentCategory = cat;
+    document.querySelectorAll('.category-btn').forEach(btn => {
+      const btnId = btn.id.replace('cat-', '');
+      btn.classList.toggle('active', btnId === cat);
+    });
+    renderProducts();
+  }
+
+  function handleDelta(id, direction) {
+    const p = products.find(item => item.id === id);
+    const currentCount = cart.get(id)?.count || 0;
+    if (p.weights) {
+      const currentIndex = p.weights.indexOf(currentCount);
+      let nextIndex = currentIndex + direction;
+      if (nextIndex < 0) {
+        updateCount(id, -currentCount);
+      } else if (nextIndex < p.weights.length) {
+        const nextWeight = p.weights[nextIndex];
+        updateCount(id, nextWeight - currentCount);
+      }
+    } else {
+      updateCount(id, direction);
+    }
+  }
+
+  function updateCount(id, delta) {
+    const p = products.find(item => item.id === id);
+    let current = cart.get(id) || { ...p, count: 0 };
+    current.count += delta;
+    if (current.count <= 0) {
+      cart.delete(id);
+    } else {
+      current.price = p.get_price(current.count);
+      cart.set(id, current);
+    }
+    updateCartUI();
+    renderProducts();
+    if (document.getElementById('detailModal').style.display === 'flex') {
+      updateModalControls(id);
+    }
+  }
+
+  function updateCartUI() {
+    const summary = document.getElementById('cartSummary');
+    const totalEl = document.getElementById('totalPrice');
+    if (cart.size === 0) {
+      summary.style.display = 'none';
+      return;
+    }
+    summary.style.display = 'block';
+    let total = 0;
+    cart.forEach(item => { total += item.price * item.count; });
+    totalEl.innerText = `${i18n[currentLang].total}: ${total.toFixed(1)} USDT`;
+  }
+
+  function openDetailModal(id) {
+    const p = products.find(item => item.id === id);
+    document.getElementById('modalImg').src = p.image;
+    document.getElementById('modalTitle').innerText = p.title;
+    document.getElementById('modalDesc').innerText = p.description[currentLang];
+    updateModalControls(id);
+    document.getElementById('detailModal').style.display = 'flex';
+  }
+
+  function updateModalControls(id) {
+    const p = products.find(item => item.id === id);
+    const count = cart.get(id)?.count || 0;
+    const currentPrice = p.get_price(count || 1);
+    const unitLabel = p.unit === 'pc' ? i18n[currentLang].unit_pc : i18n[currentLang].unit_g;
+    document.getElementById('modalPrice').innerText = `${currentPrice} USDT`;
+    const controls = document.getElementById('modalControls');
+    controls.innerHTML = count === 0
+      ? `<button class="add-btn" style="padding:15px;font-size:16px;" onclick="updateCount('${id}', ${p.weights ? p.weights[0] : 1})">${i18n[currentLang].add}</button>`
+      : `<div class="counter-controls" style="height:50px;">
+          <button class="counter-btn" style="width:60px;font-size:24px;" onclick="handleDelta('${id}', -1)">−</button>
+          <span class="count-value" style="font-size:20px;">${count} ${unitLabel}</span>
+          <button class="counter-btn" style="width:60px;font-size:24px;" onclick="handleDelta('${id}', 1)">+</button>
+         </div>`;
+  }
+
+  function closeDetailModal(e) {
+    document.getElementById('detailModal').style.display = 'none';
+  }
+
+  function openOrderModal() {
+    document.getElementById('deliveryCheckbox').checked = false;
+    document.getElementById('orderModal').style.display = 'flex';
+  }
+
+  function closeOrderModal() {
+    document.getElementById('orderModal').style.display = 'none';
+  }
+
+  function sendOrder() {
+    const comment = document.getElementById('customerComment').value;
+    const wantsDelivery = document.getElementById('deliveryCheckbox').checked;
+
+    const orderData = {
+      lang: currentLang,
+      items: Array.from(cart.values()).map(i => ({
+        title: i.title,
+        count: i.count,
+        weight: i.unit === 'g' ? i.count : null,
+        unit: i.unit,
+        price: i.price,
+        category: i.category
+      })),
+      total: Array.from(cart.values()).reduce((sum, i) => sum + (i.price * i.count), 0),
+      comment: comment,
+      delivery: wantsDelivery,
+      hasBakery: Array.from(cart.values()).some(i => i.category === 'bakery'),
+      hasMain: Array.from(cart.values()).some(i => i.category === 'main')
+    };
+    tg.sendData(JSON.stringify(orderData));
+    tg.close();
+  }
+
+  // Init
+  renderProducts();
+</script>
+
+</body>
+</html>

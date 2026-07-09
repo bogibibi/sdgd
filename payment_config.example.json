@@ -1,0 +1,6 @@
+{
+  "TRONGRID_API_KEY": "ВСТАВЬ_КЛЮЧ_TRONGRID_ДЛЯ_TRC20",
+  "ETHERSCAN_API_KEY": "ВСТАВЬ_КЛЮЧ_ETHERSCAN_V2_ДЛЯ_BEP20_BSC",
+  "TONCENTER_API_KEY": "ВСТАВЬ_КЛЮЧ_TONCENTER_ЕСЛИ_БУДЕШЬ_ДЕЛАТЬ_TON",
+  "BSC_RPC_URL": "https://bsc-dataseed.binance.org/"
+}

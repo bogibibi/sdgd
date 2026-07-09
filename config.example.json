@@ -1,0 +1,10 @@
+{
+  "operators": {
+    "bakery": [],
+    "main": [],
+    "courier": []
+  },
+  "operator_usernames": {},
+  "admins": [],
+  "admin_usernames": {}
+}
